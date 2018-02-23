@@ -215,7 +215,7 @@ train_generator = kerfunc.train_data_aug(X_train, Y_train, seed_no, bat_size)
 """Below call trains the network using data augmentation, loops indefinitely"""
 
 Keras_Model.fit_generator(train_generator, steps_per_epoch=len(X_train)/bat_size, epochs=1,
-                          batch_size=bat_size, verbose=1, validation_steps=5, callbacks=[checkpointer, early_stopper])
+                          batch_size=bat_size, callbacks=[checkpointer, early_stopper])
 
 model = load_model('/home/sinandeger/PycharmProjects/DataScienceBowl18/Keras_U-Net_Model.h5', custom_objects={'mean_iou': kerfunc.mean_iou})
 
