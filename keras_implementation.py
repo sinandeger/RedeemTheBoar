@@ -8,6 +8,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import tensorflow as tf
 from tqdm import tqdm
+import time
 
 from itertools import chain
 
@@ -34,14 +35,16 @@ from keras.layers import Input, Dense, Activation, ZeroPadding2D, BatchNormaliza
 from keras.layers import AveragePooling2D, MaxPooling2D, Dropout, GlobalMaxPooling2D, GlobalAveragePooling2D
 from keras.models import Model
 
+from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array, load_img
+
 from IPython.display import clear_output
 
 import keras_model_functions as kerfunc
 
 K.set_image_data_format('channels_last')
 
-image_width = 256
-image_height = 256
+image_width = 128
+image_height = 128
 image_channels = 3
 train_folder = '/home/sinandeger/kaggle_Competitions/DataScienceBowl18/Train/'
 test_folder = '/home/sinandeger/kaggle_Competitions/DataScienceBowl18/Test/'
@@ -77,7 +80,8 @@ for n, id_ in tqdm(enumerate(test_ids), total=len(test_ids)):
     img = resize(img, (image_height, image_width), mode='constant', preserve_range=True)
     X_test[n] = img
 
-"""Display Images"""
+
+"""Uncomment below routine to display images"""
 
 # ix = random.randint(0, len(train_ids))
 # imshow(X_train[ix])
@@ -85,7 +89,28 @@ for n, id_ in tqdm(enumerate(test_ids), total=len(test_ids)):
 # imshow(np.squeeze(Y_train[ix]))
 # plt.show()
 
+
+"""Test images after data aug applied"""
+#
+# rand_img = random.randint(0, len(train_ids))
+# #imshow(X_train[rand_img])
+#
+# #img = load_img(X_train[rand_img])  # this is a PIL image
+# x = X_train[rand_img]
+# x = x.reshape((1,) + x.shape)
+#
+# # the .flow() command below generates batches of randomly transformed images
+# # and saves the results to the `preview/` directory
+# i = 0
+# for batch in aug_data.flow(x, batch_size=1, save_to_dir='/home/sinandeger/PycharmProjects/DataScienceBowl18',
+#                                 save_prefix='aug_data', save_format='png'):
+#     i += 1
+#     if i > 20:
+#         break  # otherwise the generator would loop indefinitely
+
 plot_losses = kerfunc.PlotLosses()
+
+"""CONVNET MODEL IS INCOMPLETE"""
 
 def keras_conv_net_model(input_shape):
 
@@ -171,7 +196,26 @@ early_stopper = EarlyStopping(monitor='loss', patience=4, verbose=1)
 
 """Possible Model.fit call back functions: callbacks=[plot_losses, checkpointer, early_stopper]"""
 
-Keras_Model.fit(X_train, Y_train, epochs=42, batch_size=32, callbacks=[checkpointer, early_stopper])
+bat_size = 2
+seed_no = 1
+aug_count = 10  #Can be used to loop train_data_aug calls
+
+#start = time.time()
+
+train_generator = kerfunc.train_data_aug(X_train, Y_train, seed_no, bat_size)
+
+#end = time.time()
+
+#print start-end, 'seconds'
+
+"""Below call trains the network using the un-augmented data, 0.289 IOU score"""
+
+# Keras_Model.fit(X_train, Y_train, epochs=42, batch_size=32, callbacks=[checkpointer, early_stopper])
+
+"""Below call trains the network using data augmentation, loops indefinitely"""
+
+Keras_Model.fit_generator(train_generator, steps_per_epoch=len(X_train)/bat_size, epochs=1,
+                          batch_size=bat_size, verbose=1, validation_steps=5, callbacks=[checkpointer, early_stopper])
 
 model = load_model('/home/sinandeger/PycharmProjects/DataScienceBowl18/Keras_U-Net_Model.h5', custom_objects={'mean_iou': kerfunc.mean_iou})
 
@@ -190,6 +234,7 @@ for i in range(len(preds_test)):
                                        (sizes_test[i][0], sizes_test[i][1]),
                                        mode='constant', preserve_range=True))
 
+
 def prob_to_rles(x, cutoff=0.5):
     lab_img = label(x > cutoff)
     for i in range(1, lab_img.max() + 1):
@@ -201,7 +246,6 @@ for n, id_ in enumerate(test_ids):
     rle = list(prob_to_rles(preds_test_upsampled[n]))
     rles.extend(rle)
     new_test_ids.extend([id_] * len(rle))
-
 
 # Create submission DataFrame
 sub = pd.DataFrame()

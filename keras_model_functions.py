@@ -28,6 +28,7 @@ from keras.layers.pooling import MaxPooling2D
 from keras.layers.merge import concatenate
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras import backend as K
+from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array, load_img
 
 from keras import layers
 from keras.layers import Input, Dense, Activation, ZeroPadding2D, BatchNormalization, Flatten, Conv2D
@@ -83,3 +84,27 @@ def mean_iou(y_pred, y_true):
     with tf.control_dependencies([up_opt]):
         score = tf.identity(score)
     return score
+
+"""Data Augmentation Routines"""
+
+def train_data_aug(X_data, Y_data, sd, batchsize):
+
+    """Many more arguments can/will be added to the dictionary below"""
+
+    data_gen_args = dict(rotation_range=30.0,
+                         horizontal_flip=True)
+
+    image_augdata = ImageDataGenerator(**data_gen_args)
+    mask_augdata = ImageDataGenerator(**data_gen_args)
+
+    image_augdata.fit(X_data, augment=True, seed=sd)
+    mask_augdata.fit(Y_data, augment=True, seed=sd)
+
+    """Use save_to_dir='/home/sinandeger/PycharmProjects/DataScienceBowl18/Aug_img' to output generated images"""
+
+    image_generator = image_augdata.flow(X_data, batch_size=batchsize, seed=sd, shuffle=True)
+    mask_generator = mask_augdata.flow(Y_data, batch_size=batchsize, seed=sd, shuffle=True)
+
+    aug_generator = zip(image_generator, mask_generator)
+
+    return aug_generator
