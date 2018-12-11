@@ -42,13 +42,17 @@ from IPython.display import clear_output
 import keras_model_functions as kerfunc
 import input_pipeline as inp
 
+from matplotlib.pyplot import imshow
+
 K.set_image_data_format('channels_last')
 
 image_width = 256
 image_height = 256
 image_channels = 3
 train_folder = '/home/sinandeger/kaggle_Competitions/DataScienceBowl18/Train/'
-test_folder = '/home/sinandeger/kaggle_Competitions/DataScienceBowl18/Test/'
+#test_folder = '/home/sinandeger/kaggle_Competitions/DataScienceBowl18/Test/'
+
+test_folder = '/home/sinandeger/kaggle_Competitions/DataScienceBowl18/Stage2_Test/'
 
 train_ids = next(os.walk(train_folder))[1]
 test_ids = next(os.walk(test_folder))[1]
@@ -80,6 +84,23 @@ for n, id_ in tqdm(enumerate(test_ids), total=len(test_ids)):
     sizes_test.append([img.shape[0], img.shape[1]])
     img = resize(img, (image_height, image_width), mode='constant', preserve_range=True)
     X_test[n] = img
+
+# for k in range(len(train_ids)):
+#
+#     """Predictions on the training sample"""
+#
+#     #rand_img = random.randint(0, len(train_ids)-1)
+#     plt.subplot(221)
+#     plt.imshow(np.squeeze(X_train[k]))
+#     plt.subplot(222)
+#     plt.imshow(np.squeeze(Y_train[k]))
+#     # plt.subplot(223)
+#     # plt.imshow(np.squeeze(preds_train[rand_img]))
+#     # plt.subplot(224)
+#     # plt.imshow(np.squeeze(preds_train_t[rand_img]))
+#     plt.savefig('training_vs_predicted/' + str(train_ids[k]), format='png')
+#     plt.show()
+
 
 """Uncomment below routine to display images"""
 
@@ -212,20 +233,65 @@ train_generator = inp.train_data_aug(X_train, Y_train, seed_no, bat_size)
 
 # Keras_Model.fit(X_train, Y_train, epochs=42, batch_size=32, callbacks=[checkpointer, early_stopper])
 
-"""Below call trains the network using data augmentation, loops indefinitely"""
+"""Below call trains the network using data augmentation, as specified by train_data_aug in input_pipeline.py"""
 
-Keras_Model.fit_generator(train_generator, steps_per_epoch=len(X_train)/bat_size, samples_per_epoch=42, epochs=100,
+Keras_Model.fit_generator(train_generator, steps_per_epoch=len(X_train)/bat_size, samples_per_epoch=42, epochs=50,
                           callbacks=[checkpointer])
 
 model = load_model('/home/sinandeger/PycharmProjects/DataScienceBowl18/Keras_U-Net_Model.h5', custom_objects={'mean_iou': kerfunc.mean_iou})
 
-preds_train = model.predict(X_train[:int(X_train.shape[0]*0.9)], verbose=1)
+# preds_train = model.predict(X_train[:int(X_train.shape[0]*0.9)], verbose=1)
+# preds_val = model.predict(X_train[int(X_train.shape[0]*0.9):], verbose=1)
+
+preds_train = model.predict(X_train, verbose=1)
 preds_val = model.predict(X_train[int(X_train.shape[0]*0.9):], verbose=1)
 preds_test = model.predict(X_test, verbose=1)
 
 preds_train_t = (preds_train > 0.5).astype(np.uint8)
 preds_val_t = (preds_val > 0.5).astype(np.uint8)
 preds_test_t = (preds_test > 0.5).astype(np.uint8)
+
+print len(preds_train), len(preds_train_t), len(preds_test), len(preds_test_t)
+
+"""Uncomment below snippet to check predictions on training and test samples. Set iter_counts for how many images """
+
+# iter_count = 1000
+#
+# for k in range(iter_count):
+#
+#     """Predictions on the training sample"""
+#
+#     rand_img = random.randint(0, len(train_ids)-1)
+#     plt.subplot(221)
+#     plt.imshow(np.squeeze(X_train[rand_img]))
+#     plt.subplot(222)
+#     plt.imshow(np.squeeze(Y_train[rand_img]))
+#     plt.subplot(223)
+#     plt.imshow(np.squeeze(preds_train[rand_img]))
+#     plt.subplot(224)
+#     plt.imshow(np.squeeze(preds_train_t[rand_img]))
+#     plt.show()
+
+# for z in range(len(test_ids)):
+#
+#     plt.subplot(221)
+#     plt.imshow(np.squeeze(X_test[z]))
+#     plt.subplot(222)
+#     plt.imshow(np.squeeze(preds_test[z]))
+#     plt.subplot(223)
+#     plt.imshow(np.squeeze(preds_test_t[z]))
+#     plt.savefig('test_vs_predicted/' + str(test_ids[z]), format='png')
+
+
+"""Predictions on the test sample"""
+#     rand_img = random.randint(0, len(test_ids)-1)
+#     plt.subplot(221)
+#     plt.imshow(np.squeeze(X_test[rand_img]))
+#     plt.subplot(222)
+#     plt.imshow(np.squeeze(preds_test[rand_img]))
+#     plt.subplot(223)
+#     plt.imshow(np.squeeze(preds_test_t[rand_img]))
+#     plt.show()
 
 # Create list of upsampled test masks
 preds_test_upsampled = []
@@ -251,5 +317,25 @@ for n, id_ in enumerate(test_ids):
 sub = pd.DataFrame()
 sub['ImageId'] = new_test_ids
 sub['EncodedPixels'] = pd.Series(rles).apply(lambda x: ' '.join(str(y) for y in x))
-sub.to_csv('TEST.csv', index=False)
+sub.to_csv('Stage2_valid.csv', index=False)
+
+# for k in range(len(train_ids)):
+#
+#     """Predictions on the training sample"""
+#
+#     plt.subplots_adjust(hspace=0.3)
+#     plt.subplot(221)
+#     plt.title('Training Image')
+#     plt.imshow(np.squeeze(X_train[k]))
+#     plt.subplot(222)
+#     plt.title('Ground Truth Masks')
+#     plt.imshow(np.squeeze(Y_train[k]))
+#     plt.subplot(223)
+#     plt.title('Prediction', fontsize=8)
+#     plt.imshow(np.squeeze(preds_train[k]))
+#     plt.subplot(224)
+#     plt.title('Prediction with p > 0.5', fontsize=8)
+#     plt.imshow(np.squeeze(preds_train_t[k]))
+#     plt.savefig('training_vs_predicted/' + str(train_ids[k]), format='png')
+#     # plt.show()
 
