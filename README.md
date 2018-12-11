@@ -5,4 +5,8 @@ keras_implementation is the main part of the code. It contains the image preproc
 
 As the training data was limited in size, and skewed in content (images for which it was easier to mask the nuclei dominated the sample), data augmentation was an important part of this challenge. input_pipeline contains the data augmentation snipet keras_implementation calls during training.
 
+Below is an example of the data, and the output of our code. The top two panels is what is provided in the training data. The top left panel is the image, and the top right panel is the ground truth masks of the cell nuclei. The bottom two panels are the predictions of the neural network. The metric of accuracy for the competition was intersection over union (IoU), and this figure is an example to a high IoU score case.
+
+![Figure 1.](https://github.com/sinandeger/RedeemTheBoar/blob/master/4e1c889de3764694d0dea41e5682fedb265eaf2cdbe72ff6c1f518747d709464.png)
+
 Team members: Sinan Deger ([@sinandeger](https://github.com/sinandeger)), Donald Lee-Brown ([@dleebrown](https://github.com/dleebrown)), and Nesar Ramachandra ([@nesar](https://github.com/nesar)). 
