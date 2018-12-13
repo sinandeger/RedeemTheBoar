@@ -49,10 +49,10 @@ K.set_image_data_format('channels_last')
 image_width = 256
 image_height = 256
 image_channels = 3
-train_folder = '/home/sinandeger/kaggle_Competitions/DataScienceBowl18/Train/'
-#test_folder = '/home/sinandeger/kaggle_Competitions/DataScienceBowl18/Test/'
+train_folder = '../Train/'
+#test_folder = '../Test/'
 
-test_folder = '/home/sinandeger/kaggle_Competitions/DataScienceBowl18/Stage2_Test/'
+test_folder = '../Stage2_Test/'
 
 train_ids = next(os.walk(train_folder))[1]
 test_ids = next(os.walk(test_folder))[1]
@@ -60,6 +60,7 @@ test_ids = next(os.walk(test_folder))[1]
 X_train = np.zeros((len(train_ids), image_height, image_width, image_channels), dtype=np.uint8)
 Y_train = np.zeros((len(train_ids), image_height, image_width, 1), dtype=np.bool)
 
+"""The data input & preprocessing pipeline borrowed from excellent kernels & discussions at the kaggle competition page"""
 
 for n, id_ in tqdm(enumerate(train_ids), total=len(train_ids)):
     path = train_folder + id_
